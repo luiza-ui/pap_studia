@@ -1,1 +1,1 @@
-web: gunicorn pap.wsgi --log-file -
+web: gunicorn pap.wsgi --bind 0.0.0.0:$PORT --log-file -
