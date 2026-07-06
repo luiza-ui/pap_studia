@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Enviar Recurso — Studia{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div style="width:48px;height:48px;border-radius:12px;background:var(--st-blue-light);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-cloud-upload" style="font-size:1.4rem;color:var(--st-blue);"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold mb-0" style="letter-spacing:-.02em;">Enviar recurso</h4>
+            <p class="text-muted mb-0" style="font-size:.875rem;">Partilha com a comunidade Studia</p>
+          </div>
+        </div>
+
+        <div class="alert alert-info mb-4" style="font-size:.875rem;">
+          <i class="bi bi-lightning-charge-fill me-2"></i>
+          Este upload vai adicionar <strong>+2 créditos</strong> de download à tua conta.
+        </div>
+
+        <p class="text-muted mb-4" style="font-size:.875rem;">
+          Curso e instituição são preenchidos automaticamente do teu perfil.<br>
+          Formatos aceites: PDF, DOCX, PPTX ou imagem <strong>(máx. 50MB)</strong>.
+        </p>
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ field.id_for_label }}">
+              {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% if field.errors %}<div class="invalid-feedback d-block" style="font-size:.8rem;">{% for e in field.errors %}{{ e }}{% endfor %}</div>{% endif %}
+          </div>
+          {% endfor %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="font-size:.875rem;">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary flex-fill">
+              <i class="bi bi-cloud-upload me-1"></i>Enviar recurso
+            </button>
+            <a href="{% url 'resources:lista' %}" class="btn btn-outline-secondary flex-fill">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

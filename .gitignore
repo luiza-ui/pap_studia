@@ -1,0 +1,13 @@
+# Superpowers
+.superpowers/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+.env

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Studia{% endblock %}</title>
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Studia Design System -->
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Navbar ──────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg st-navbar sticky-top">
+  <div class="container">
+    <a class="st-brand" href="{% url 'home' %}">
+      Studia<span class="brand-dot">.</span>
+    </a>
+
+    <button class="navbar-toggler ms-auto" type="button"
+            data-bs-toggle="collapse" data-bs-target="#navMenu"
+            aria-label="Abrir menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse ms-4" id="navMenu">
+      <!-- Links principais -->
+      <ul class="navbar-nav me-auto gap-1">
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link st-nav-link" href="{% url 'resources:lista' %}">
+            <i class="bi bi-grid me-1"></i>Recursos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link st-nav-link" href="{% url 'resources:upload' %}">
+            <i class="bi bi-cloud-upload me-1"></i>Enviar
+          </a>
+        </li>
+        {% if user.is_staff %}
+        <li class="nav-item">
+          <a class="nav-link st-nav-link" href="{% url 'reports:lista' %}">
+            <i class="bi bi-flag me-1"></i>Reports
+          </a>
+        </li>
+        {% endif %}
+        {% endif %}
+      </ul>
+
+      <!-- Área de utilizador -->
+      <ul class="navbar-nav ms-auto gap-2 align-items-center">
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown st-dropdown">
+          <a class="nav-link st-user-pill dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <span class="st-avatar-sm">{{ user.nome|first|upper }}</span>
+            <span class="d-none d-md-inline">{{ user.nome }}</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li class="px-2 pb-1">
+              <div class="text-muted" style="font-size:.75rem;">Sessão iniciada como</div>
+              <div class="fw-semibold" style="font-size:.875rem;">{{ user.nome }}</div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'accounts:perfil' %}"><i class="bi bi-person me-2"></i>O meu perfil</a></li>
+            <li><a class="dropdown-item" href="{% url 'accounts:editar_perfil' %}"><i class="bi bi-pencil me-2"></i>Editar perfil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+                <button type="submit" class="dropdown-item text-danger">
+                  <i class="bi bi-box-arrow-right me-2"></i>Terminar sessão
+                </button>
+              </form>
+            </li>
+          </ul>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="st-nav-link nav-link" href="{% url 'accounts:login' %}">Entrar</a>
+        </li>
+        <li class="nav-item">
+          <a class="btn btn-primary btn-sm px-4" href="{% url 'accounts:registo' %}">Criar conta</a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Flash messages ───────────────────────────────────────── -->
+{% if messages %}
+<div class="container mt-3">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+    <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'danger' or message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── Main content ─────────────────────────────────────────── -->
+<main class="container my-4">{% block content %}{% endblock %}</main>
+
+<!-- ── Footer ──────────────────────────────────────────────── -->
+<footer class="st-footer">
+  <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+    <div>
+      <span class="st-footer-brand">Studia.</span>
+      <p class="mb-0 mt-1">Plataforma de partilha de recursos académicos do ensino secundário.</p>
+    </div>
+    <p class="mb-0">&copy; 2025 Studia — Todos os direitos reservados</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

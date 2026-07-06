@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Verifica o teu email — Studia{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card text-center">
+      <div class="card-body p-5">
+        <div class="mb-4">
+          <i class="bi bi-envelope-check" style="font-size:3.5rem;color:var(--st-blue);"></i>
+        </div>
+        <h4 class="fw-bold mb-3">Verifica o teu email</h4>
+        <p class="text-muted mb-4">
+          Enviámos um link de activação para o teu email institucional.<br>
+          Clica no link para activar a tua conta no Studia.
+        </p>
+        <p class="text-muted mb-4" style="font-size:.875rem;">
+          O link é válido durante <strong>24 horas</strong>.<br>
+          Não encontras o email? Verifica a pasta de spam.
+        </p>
+        <hr>
+        <p class="mb-3" style="font-size:.875rem;">
+          O link expirou ou não chegou?
+        </p>
+        <a href="{% url 'accounts:reenviar_activacao' %}" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-repeat me-1"></i>Pedir novo link
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

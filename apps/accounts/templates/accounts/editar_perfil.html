@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Editar Perfil — Studia{% endblock %}
+{% block content %}
+<div class="st-auth-card" style="max-width:520px;">
+  <div class="card">
+    <div class="card-body">
+      <h4 class="fw-bold mb-1" style="letter-spacing:-.02em;">Editar perfil</h4>
+      <p class="text-muted mb-4" style="font-size:.875rem;">Deixa os campos de senha e email em branco para os manter inalterados.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Email actual</label>
+          <input type="text" class="form-control" value="{{ email_atual }}" disabled style="background:var(--st-surface);">
+        </div>
+        {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {% if field.field.widget.input_type == 'password' %}
+          <div class="input-group">
+            {{ field }}
+            <button class="btn btn-outline-secondary" type="button"
+                    onclick="toggleSenha('{{ field.id_for_label }}', this)" tabindex="-1">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          {% else %}
+          {{ field }}
+          {% endif %}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% if field.errors %}<div class="invalid-feedback d-block" style="font-size:.8rem;">{% for e in field.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+        {% endfor %}
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger" style="font-size:.875rem;">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>
+        {% endif %}
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary flex-fill">Guardar alterações</button>
+          <a href="{% url 'accounts:perfil' %}" class="btn btn-outline-secondary flex-fill">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function toggleSenha(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.replace('bi-eye', 'bi-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.replace('bi-eye-slash', 'bi-eye');
+  }
+}
+</script>
+{% endblock %}

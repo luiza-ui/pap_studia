@@ -1,0 +1,10 @@
+django>=6.0,<7.0
+django-crispy-forms
+crispy-bootstrap5
+gunicorn
+whitenoise
+psycopg2-binary
+dj-database-url
+pillow
+imagehash
+pdfminer.six
