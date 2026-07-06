@@ -1,31 +1,18 @@
 """
-Management command para popular a BD com dados de teste completos.
-
-Cobre todos os cenários testáveis:
-  - Superutilizador (admin)
-  - Alunos de cursos e anos diferentes
-  - Recursos de todos os tipos (PDF, DOCX, PPTX, IMG)
-  - Comentários em recursos
-  - Favoritos
-  - Reports pendentes (recurso e utilizador), com todos os motivos
-  - Um aluno bloqueado (is_active=False)
-  - Um aluno sem créditos para download
-  - Um aluno com reports falsos
-
-Uso:
-    python manage.py popular_bd
+Management command para popular a BD com dados de teste completos e ricos.
 """
 
-import hashlib
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
 
 def pdf(nome, texto=""):
-    """Ficheiro PDF mínimo com conteúdo único para evitar colisão de hash."""
     conteudo = f"%PDF-1.4 Studia — {nome} — {texto}".encode("utf-8")
     return ContentFile(conteudo, name=nome.replace(" ", "_")[:50] + ".pdf")
 
@@ -38,18 +25,17 @@ def pptx(nome):
     return ContentFile(conteudo, name=nome.replace(" ", "_")[:50] + ".pptx")
 
 def img(nome):
-    # PNG mínimo válido (1x1 px vermelho)
     conteudo = (
         b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
         b'\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00'
         b'\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18'
         b'\xd8N\x00\x00\x00\x00IEND\xaeB`\x82'
-        + nome.encode("utf-8")  # torna o hash único por recurso
+        + nome.encode("utf-8")
     )
     return ContentFile(conteudo, name=nome.replace(" ", "_")[:50] + ".png")
 
 
-def criar_recurso(usuario, nome, disciplina, ano, arquivo_fn, professor=""):
+def criar_recurso(usuario, nome, disciplina, ano, arquivo_fn, professor="", dias_atras=0):
     from apps.resources.models import Resource
     r = Resource(
         usuario=usuario,
@@ -63,11 +49,15 @@ def criar_recurso(usuario, nome, disciplina, ano, arquivo_fn, professor=""):
     r.arquivo = arquivo_fn(nome)
     r._skip_full_clean = True
     r.save()
+    if dias_atras:
+        Resource.objects.filter(pk=r.pk).update(
+            data_upload=timezone.now() - timedelta(days=dias_atras)
+        )
     return r
 
 
 class Command(BaseCommand):
-    help = "Popula a BD com dados de teste completos para todos os cenários."
+    help = "Popula a BD com um conjunto rico de dados de teste para apresentação."
 
     def handle(self, *args, **options):
         from apps.resources.models import Resource
@@ -82,8 +72,6 @@ class Command(BaseCommand):
         Resource.objects.all().delete()
         User.objects.all().delete()
 
-        # ── UTILIZADORES ──────────────────────────────────────────────────
-
         self.stdout.write("A criar utilizadores...")
 
         admin = User.objects.create_superuser(
@@ -95,208 +83,233 @@ class Command(BaseCommand):
             instituicao="AE Carlos Amarante — Braga",
         )
 
-        # Aluno principal — tem uploads, downloads e comentários
-        ana = User.objects.create_user(
-            email="ana@escola.pt",
-            password="teste123",
-            nome="Ana Silva",
-            curso="TGPSI",
-            ano_letivo="12",
-            instituicao="AE Carlos Amarante — Braga",
-        )
-        User.objects.filter(pk=ana.pk).update(is_active=True)
-        ana.refresh_from_db()
+        alunos_info = [
+            ("ana@escola.pt",        "Ana Silva",           "TGPSI", "12", "AE Carlos Amarante — Braga"),
+            ("joao@escola.pt",       "João Costa",          "CT",    "11", "AE Carlos Amarante — Braga"),
+            ("maria@escola.pt",      "Maria Ferreira",      "LH",    "10", "ES Dona Maria II — Braga"),
+            ("rui@escola.pt",        "Rui Pereira",         "TPSI",  "12", "AE Carlos Amarante — Braga"),
+            ("beatriz@escola.pt",    "Beatriz Gonçalves",   "AV",    "11", "ES Sá de Miranda — Braga"),
+            ("tiago@escola.pt",      "Tiago Ribeiro",       "TRSI",  "12", "AE Carlos Amarante — Braga"),
+            ("sofia@escola.pt",      "Sofia Martins",       "CSE",   "10", "ES Dona Maria II — Braga"),
+            ("diogo@escola.pt",      "Diogo Almeida",       "TM",    "11", "ES Alberto Sampaio — Braga"),
+            ("carolina@escola.pt",   "Carolina Fernandes",  "TDG",   "12", "AE Carlos Amarante — Braga"),
+            ("miguel@escola.pt",     "Miguel Sousa",        "TELE",  "11", "ES Sá de Miranda — Braga"),
+            ("ines@escola.pt",       "Inês Rodrigues",      "CT",    "12", "ES Alberto Sampaio — Braga"),
+            ("gustavo@escola.pt",    "Gustavo Lima",        "TMOD",  "10", "AE Carlos Amarante — Braga"),
+        ]
 
-        # Aluno de outro curso
-        joao = User.objects.create_user(
-            email="joao@escola.pt",
-            password="teste123",
-            nome="João Costa",
-            curso="CT",
-            ano_letivo="11",
-            instituicao="AE Carlos Amarante — Braga",
-        )
-        User.objects.filter(pk=joao.pk).update(is_active=True)
-        joao.refresh_from_db()
+        alunos = {}
+        for email, nome, curso, ano, instituicao in alunos_info:
+            u = User.objects.create_user(
+                email=email, password="teste123", nome=nome,
+                curso=curso, ano_letivo=ano, instituicao=instituicao,
+            )
+            User.objects.filter(pk=u.pk).update(is_active=True)
+            u.refresh_from_db()
+            alunos[email.split("@")[0]] = u
 
-        # Aluno de outra escola
-        maria = User.objects.create_user(
-            email="maria@escola.pt",
-            password="teste123",
-            nome="Maria Ferreira",
-            curso="LH",
-            ano_letivo="10",
-            instituicao="ES Dona Maria II — Braga",
+        ana, joao, maria, rui, beatriz, tiago, sofia, diogo, carolina, miguel, ines, gustavo = (
+            alunos["ana"], alunos["joao"], alunos["maria"], alunos["rui"],
+            alunos["beatriz"], alunos["tiago"], alunos["sofia"], alunos["diogo"],
+            alunos["carolina"], alunos["miguel"], alunos["ines"], alunos["gustavo"],
         )
-        User.objects.filter(pk=maria.pk).update(is_active=True)
-        maria.refresh_from_db()
 
-        # Aluno sem créditos (0 uploads, já fez 1 download = esgotou o bónus)
         sem_creditos = User.objects.create_user(
-            email="semcreditos@escola.pt",
-            password="teste123",
-            nome="Carlos Sem Créditos",
-            curso="AV",
-            ano_letivo="11",
+            email="semcreditos@escola.pt", password="teste123",
+            nome="Carlos Sem Créditos", curso="AV", ano_letivo="11",
             instituicao="AE Carlos Amarante — Braga",
         )
         User.objects.filter(pk=sem_creditos.pk).update(is_active=True, total_downloads=1)
-        sem_creditos.refresh_from_db()
 
-        # Aluno bloqueado (is_active=False) — não consegue fazer login
-        bloqueado = User.objects.create_user(
-            email="bloqueado@escola.pt",
-            password="teste123",
-            nome="Pedro Bloqueado",
-            curso="TGE",
-            ano_letivo="12",
+        User.objects.create_user(
+            email="bloqueado@escola.pt", password="teste123",
+            nome="Pedro Bloqueado", curso="TGE", ano_letivo="12",
             instituicao="AE Carlos Amarante — Braga",
         )
-        User.objects.filter(pk=bloqueado.pk).update(is_active=False)
+        User.objects.filter(email="bloqueado@escola.pt").update(is_active=False)
 
-        # Aluno com reports falsos (3 denúncias rejeitadas)
         denunciante = User.objects.create_user(
-            email="denunciante@escola.pt",
-            password="teste123",
-            nome="Rita Denunciante",
-            curso="TPSI",
-            ano_letivo="12",
+            email="denunciante@escola.pt", password="teste123",
+            nome="Rita Denunciante", curso="TPSI", ano_letivo="12",
             instituicao="AE Carlos Amarante — Braga",
         )
         User.objects.filter(pk=denunciante.pk).update(is_active=True, total_reports_falsos=3)
         denunciante.refresh_from_db()
 
-        # ── RECURSOS ──────────────────────────────────────────────────────
-
         self.stdout.write("A criar recursos...")
 
-        r_pdf = criar_recurso(ana, "Resumos de Redes — Capítulo 3",
-            "Redes de Computadores", "12", pdf, professor="Professora Helena")
+        recursos_def = [
+            (ana,      "Resumos de Redes — Capítulo 3",                  "Redes de Computadores",      "12", pdf,  "Professora Helena", 2),
+            (ana,      "Ficha de Matemática — Limites e Continuidade",   "Matemática A",               "12", pdf,  "Prof. Rodrigues",   5),
+            (ana,      "Recurso sem Downloads",                          "Programação",                "12", pdf,  "Prof. Sousa",       1),
+            (joao,     "Relatório de Física — Eletromagnetismo",         "Física e Química A",         "11", docx, "Dr. Mendes",        3),
+            (joao,     "Apresentação de História — Século XX",           "História A",                 "11", pptx, "",                   7),
+            (joao,     "Exercícios de Inglês — Reported Speech",         "Inglês",                     "11", pdf,  "Professora Marta",   10),
+            (maria,    "Esquema de Inglês — Past Perfect",                "Inglês",                     "10", img,  "Professora Marta",   4),
+            (maria,    "Recurso com Conteúdo Suspeito",                  "Português",                  "10", pdf,  "",                   1),
+            (maria,    "Resumo de Filosofia — Ética Kantiana",           "Filosofia",                  "10", pdf,  "Dr. Almeida",        6),
+            (rui,      "Projeto Final — Sistema de Gestão Escolar",      "Programação",                "12", pptx, "Prof. Costa",        2),
+            (rui,      "Apontamentos de Bases de Dados — Normalização",  "Bases de Dados",             "12", pdf,  "Prof. Costa",        8),
+            (beatriz,  "Portfólio de Desenho — Estudos de Luz e Sombra", "Desenho A",                  "11", img,  "Professora Sara",    5),
+            (beatriz,  "Trabalho de Geometria Descritiva",               "Geometria Descritiva A",     "11", pdf,  "Professor Nuno",     12),
+            (tiago,    "Configuração de Redes — Laboratório VLAN",       "Redes e Sistemas",           "12", docx, "Prof. Oliveira",     3),
+            (tiago,    "Ficha de Segurança Informática",                 "Segurança Informática",      "12", pdf,  "Prof. Oliveira",     9),
+            (sofia,    "Resumo de Economia — Mercados e Preços",         "Economia A",                 "10", pdf,  "Professora Beatriz", 6),
+            (diogo,    "Plano de Marketing Digital — Estudo de Caso",    "Marketing",                  "11", pptx, "Prof. Teixeira",     4),
+            (carolina, "Cartaz Publicitário — Campanha Sustentável",     "Design Gráfico",              "12", img,  "Professora Marta",   2),
+            (carolina, "Manual de Identidade Visual — Projeto Final",    "Design Gráfico",              "12", pdf,  "Professora Marta",   14),
+            (miguel,   "Relatório de Eletrónica — Circuitos Digitais",   "Eletrónica",                 "11", docx, "Prof. Silva",        7),
+            (ines,     "Resumo de Biologia — Genética Mendeliana",       "Biologia e Geologia",        "12", pdf,  "Professora Cátia",   3),
+            (ines,     "Ficha de Química — Equilíbrio Químico",         "Física e Química A",         "12", pdf,  "Dr. Mendes",        11),
+            (gustavo,  "Storyboard — Curta-metragem Animada",           "Multimédia",                 "10", pptx, "Prof. Ferreira",     5),
+        ]
 
-        r_pdf2 = criar_recurso(ana, "Ficha de Matemática — Limites e Continuidade",
-            "Matemática A", "12", pdf, professor="Prof. Rodrigues")
+        recursos = {}
+        for usuario, nome, disciplina, ano, fn, prof, dias in recursos_def:
+            r = criar_recurso(usuario, nome, disciplina, ano, fn, professor=prof, dias_atras=dias)
+            recursos[nome] = r
 
-        r_docx = criar_recurso(joao, "Relatório de Física — Eletromagnetismo",
-            "Física e Química A", "11", docx, professor="Dr. Mendes")
-
-        r_pptx = criar_recurso(joao, "Apresentação de História — Século XX",
-            "História A", "11", pptx)
-
-        r_img = criar_recurso(maria, "Esquema de Inglês — Past Perfect",
-            "Inglês", "10", img, professor="Professora Marta")
-
-        r_para_reportar = criar_recurso(maria, "Recurso com Conteúdo Suspeito",
-            "Português", "10", pdf)
-
-        r_sem_downloads = criar_recurso(ana, "Recurso sem Downloads",
-            "Programação", "12", pdf, professor="Prof. Sousa")
-
-        # Simular downloads em alguns recursos
-        Resource.objects.filter(pk=r_pdf.pk).update(total_downloads=12)
-        Resource.objects.filter(pk=r_pdf2.pk).update(total_downloads=5)
-        Resource.objects.filter(pk=r_docx.pk).update(total_downloads=3)
-        Resource.objects.filter(pk=r_img.pk).update(total_downloads=1)
-
-        # ── COMENTÁRIOS ───────────────────────────────────────────────────
+        downloads_simulados = {
+            "Resumos de Redes — Capítulo 3": 24,
+            "Ficha de Matemática — Limites e Continuidade": 17,
+            "Relatório de Física — Eletromagnetismo": 9,
+            "Apresentação de História — Século XX": 31,
+            "Esquema de Inglês — Past Perfect": 5,
+            "Exercícios de Inglês — Reported Speech": 14,
+            "Projeto Final — Sistema de Gestão Escolar": 22,
+            "Apontamentos de Bases de Dados — Normalização": 8,
+            "Portfólio de Desenho — Estudos de Luz e Sombra": 6,
+            "Configuração de Redes — Laboratório VLAN": 13,
+            "Manual de Identidade Visual — Projeto Final": 19,
+            "Resumo de Biologia — Genética Mendeliana": 27,
+            "Ficha de Química — Equilíbrio Químico": 10,
+        }
+        for nome, total in downloads_simulados.items():
+            Resource.objects.filter(pk=recursos[nome].pk).update(total_downloads=total)
 
         self.stdout.write("A criar comentários...")
 
-        Comment.objects.create(usuario=joao, recurso=r_pdf,
-            texto="Muito bom! Ajudou-me muito na preparação para o teste.")
-        Comment.objects.create(usuario=maria, recurso=r_pdf,
-            texto="Os resumos do capítulo 3 estão excelentes, obrigada!")
-        Comment.objects.create(usuario=joao, recurso=r_pdf2,
-            texto="Tens mais fichas de Matemática? Precisava do capítulo de derivadas.")
-        Comment.objects.create(usuario=ana, recurso=r_docx,
-            texto="Bom relatório, mas faltam as referências bibliográficas.")
-        Comment.objects.create(usuario=maria, recurso=r_pptx,
-            texto="A apresentação está muito completa!")
+        comentarios_def = [
+            (joao,     "Resumos de Redes — Capítulo 3",              "Muito bom! Ajudou-me muito na preparação para o teste."),
+            (maria,    "Resumos de Redes — Capítulo 3",              "Os resumos do capítulo 3 estão excelentes, obrigada!"),
+            (rui,      "Resumos de Redes — Capítulo 3",              "Tens também o capítulo 4? Preciso para a próxima ficha."),
+            (joao,     "Ficha de Matemática — Limites e Continuidade","Tens mais fichas de Matemática? Precisava do capítulo de derivadas."),
+            (ana,      "Relatório de Física — Eletromagnetismo",     "Bom relatório, mas faltam as referências bibliográficas."),
+            (maria,    "Apresentação de História — Século XX",       "A apresentação está muito completa!"),
+            (beatriz,  "Apresentação de História — Século XX",       "Ajudou-me imenso a rever a matéria antes do teste, obrigada!"),
+            (sofia,    "Exercícios de Inglês — Reported Speech",     "Excelente explicação dos exemplos, ficou tudo mais claro."),
+            (tiago,    "Projeto Final — Sistema de Gestão Escolar",  "Código muito bem organizado, serviu-me de inspiração para o meu projeto."),
+            (ines,     "Apontamentos de Bases de Dados — Normalização", "Finalmente percebi a diferença entre 2FN e 3FN, obrigada!"),
+            (carolina, "Portfólio de Desenho — Estudos de Luz e Sombra", "Trabalho lindíssimo, dá para ver a evolução técnica."),
+            (diogo,    "Cartaz Publicitário — Campanha Sustentável", "Adorei o conceito da campanha, muito criativo."),
+            (miguel,   "Ficha de Química — Equilíbrio Químico",     "Os exercícios resolvidos ajudaram-me a perceber o deslocamento do equilíbrio."),
+            (gustavo,  "Resumo de Biologia — Genética Mendeliana",  "Explicação muito clara dos cruzamentos, obrigado pela partilha!"),
+        ]
 
-        # ── FAVORITOS ─────────────────────────────────────────────────────
+        for usuario, nome_recurso, texto in comentarios_def:
+            Comment.objects.create(usuario=usuario, recurso=recursos[nome_recurso], texto=texto)
 
         self.stdout.write("A criar favoritos...")
 
-        Favorite.objects.create(usuario=joao,   recurso=r_pdf)
-        Favorite.objects.create(usuario=maria,  recurso=r_pdf)
-        Favorite.objects.create(usuario=ana,    recurso=r_docx)
-        Favorite.objects.create(usuario=joao,   recurso=r_img)
-        Favorite.objects.create(usuario=maria,  recurso=r_pdf2)
+        favoritos_def = [
+            (joao,     "Resumos de Redes — Capítulo 3"),
+            (maria,    "Resumos de Redes — Capítulo 3"),
+            (rui,      "Resumos de Redes — Capítulo 3"),
+            (ana,      "Relatório de Física — Eletromagnetismo"),
+            (joao,     "Esquema de Inglês — Past Perfect"),
+            (maria,    "Ficha de Matemática — Limites e Continuidade"),
+            (beatriz,  "Apresentação de História — Século XX"),
+            (sofia,    "Exercícios de Inglês — Reported Speech"),
+            (tiago,    "Apontamentos de Bases de Dados — Normalização"),
+            (ines,     "Projeto Final — Sistema de Gestão Escolar"),
+            (carolina, "Portfólio de Desenho — Estudos de Luz e Sombra"),
+            (diogo,    "Manual de Identidade Visual — Projeto Final"),
+            (miguel,   "Ficha de Química — Equilíbrio Químico"),
+            (gustavo,  "Resumo de Biologia — Genética Mendeliana"),
+            (rui,      "Configuração de Redes — Laboratório VLAN"),
+        ]
 
-        # Atualizar total_salvos
-        Resource.objects.filter(pk=r_pdf.pk).update(total_salvos=2)
-        Resource.objects.filter(pk=r_docx.pk).update(total_salvos=1)
-        Resource.objects.filter(pk=r_img.pk).update(total_salvos=1)
-        Resource.objects.filter(pk=r_pdf2.pk).update(total_salvos=1)
+        contagem_salvos = {}
+        for usuario, nome_recurso in favoritos_def:
+            Favorite.objects.create(usuario=usuario, recurso=recursos[nome_recurso])
+            contagem_salvos[nome_recurso] = contagem_salvos.get(nome_recurso, 0) + 1
 
-        # ── REPORTS ───────────────────────────────────────────────────────
+        for nome_recurso, total in contagem_salvos.items():
+            Resource.objects.filter(pk=recursos[nome_recurso].pk).update(total_salvos=total)
 
         self.stdout.write("A criar denúncias...")
 
-        # Report de recurso — pendente (para testar a fila de moderação)
         Report.objects.create(
-            denunciante=joao,
-            recurso=r_para_reportar,
-            tipo="RECURSO",
-            motivo_tipo="plagio",
+            denunciante=joao, recurso=recursos["Recurso com Conteúdo Suspeito"],
+            tipo="RECURSO", motivo_tipo="plagio",
             motivo="Este recurso parece ser uma cópia de um trabalho publicado online.",
             status="PENDENTE",
         )
-
-        # Report de recurso com motivo "outro" (tem detalhes)
         Report.objects.create(
-            denunciante=maria,
-            recurso=r_pdf2,
-            tipo="RECURSO",
-            motivo_tipo="outro",
+            denunciante=maria, recurso=recursos["Ficha de Matemática — Limites e Continuidade"],
+            tipo="RECURSO", motivo_tipo="outro",
             motivo="O conteúdo tem erros graves que podem induzir os alunos em erro.",
             status="PENDENTE",
         )
-
-        # Report de utilizador — pendente
         Report.objects.create(
-            denunciante=denunciante,
-            usuario_denunciado=joao,
-            tipo="USUARIO",
-            motivo_tipo="ofensa",
+            denunciante=sofia, recurso=recursos["Cartaz Publicitário — Campanha Sustentável"],
+            tipo="RECURSO", motivo_tipo="outro",
+            motivo="Parece usar imagens protegidas por direitos de autor sem crédito.",
+            status="PENDENTE",
+        )
+        Report.objects.create(
+            denunciante=denunciante, usuario_denunciado=joao,
+            tipo="USUARIO", motivo_tipo="ofensa",
             motivo="Comentário ofensivo noutro contexto.",
             status="PENDENTE",
         )
-
-        # Report já aceite (histórico)
         Report.objects.create(
-            denunciante=ana,
-            recurso=r_sem_downloads,
-            tipo="RECURSO",
-            motivo_tipo="spam",
+            denunciante=ana, recurso=recursos["Recurso sem Downloads"],
+            tipo="RECURSO", motivo_tipo="spam", status="ACEITE",
+        )
+        Report.objects.create(
+            denunciante=miguel, usuario_denunciado=gustavo,
+            tipo="USUARIO", motivo_tipo="spam",
+            motivo="Publicou o mesmo recurso várias vezes em disciplinas diferentes.",
             status="ACEITE",
         )
-
-        # Report rejeitado (denúncia falsa — penalizou o denunciante)
         Report.objects.create(
-            denunciante=denunciante,
-            recurso=r_pdf,
-            tipo="RECURSO",
-            motivo_tipo="improprio",
-            status="REJEITADO",
+            denunciante=denunciante, recurso=recursos["Resumos de Redes — Capítulo 3"],
+            tipo="RECURSO", motivo_tipo="improprio", status="REJEITADO",
         )
-
-        # ── RESUMO ────────────────────────────────────────────────────────
+        Report.objects.create(
+            denunciante=denunciante, recurso=recursos["Apresentação de História — Século XX"],
+            tipo="RECURSO", motivo_tipo="plagio", status="REJEITADO",
+        )
+        Report.objects.create(
+            denunciante=denunciante, usuario_denunciado=ines,
+            tipo="USUARIO", motivo_tipo="ofensa", status="REJEITADO",
+        )
 
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS("=" * 56))
         self.stdout.write(self.style.SUCCESS("  BD de teste populada com sucesso!"))
         self.stdout.write(self.style.SUCCESS("=" * 56))
         self.stdout.write("")
-        self.stdout.write("  UTILIZADORES (todos com password 'teste123'):")
+        self.stdout.write("  UTILIZADORES (alunos com password 'teste123'):")
         self.stdout.write("  admin@escola.pt       → Administrador  (admin123)")
-        self.stdout.write("  ana@escola.pt         → TGPSI 12º — tem uploads")
+        self.stdout.write("  ana@escola.pt         → TGPSI 12º — tem uploads e favoritos")
         self.stdout.write("  joao@escola.pt        → CT 11º — tem comentários e favoritos")
         self.stdout.write("  maria@escola.pt       → LH 10º — outra escola")
+        self.stdout.write("  rui@escola.pt         → TPSI 12º — projeto final")
+        self.stdout.write("  beatriz@escola.pt     → AV 11º — outra escola")
+        self.stdout.write("  tiago@escola.pt       → TRSI 12º — redes e segurança")
+        self.stdout.write("  sofia@escola.pt       → CSE 10º — outra escola")
+        self.stdout.write("  diogo@escola.pt       → TM 11º — outra escola")
+        self.stdout.write("  carolina@escola.pt    → TDG 12º — design gráfico")
+        self.stdout.write("  miguel@escola.pt      → TELE 11º — outra escola")
+        self.stdout.write("  ines@escola.pt        → CT 12º — outra escola")
+        self.stdout.write("  gustavo@escola.pt     → TMOD 10º — multimédia")
         self.stdout.write("  semcreditos@escola.pt → sem créditos para download")
         self.stdout.write("  bloqueado@escola.pt   → conta bloqueada (is_active=False)")
         self.stdout.write("  denunciante@escola.pt → 3 reports falsos")
         self.stdout.write("")
-        self.stdout.write(f"  RECURSOS : {Resource.objects.count()} (PDF, DOCX, PPTX, IMG)")
+        self.stdout.write(f"  RECURSOS    : {Resource.objects.count()} (PDF, DOCX, PPTX, IMG, várias disciplinas)")
         self.stdout.write(f"  COMENTÁRIOS : {Comment.objects.count()}")
         self.stdout.write(f"  FAVORITOS   : {Favorite.objects.count()}")
         self.stdout.write(f"  REPORTS     : {Report.objects.count()} "
