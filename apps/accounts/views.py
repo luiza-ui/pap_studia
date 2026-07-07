@@ -99,7 +99,8 @@ def registro_view(request):
                                 url_activacao, url_activacao,
                             ),
                         )
-                except Exception:
+                except Exception as e:
+                    print(f"ERRO AO ENVIAR EMAIL: {e}")
                     messages.warning(
                         request,
                         "Conta criada, mas não foi possível enviar o email de activação. "
@@ -194,12 +195,13 @@ def reenviar_activacao_view(request):
                             url_activacao, url_activacao,
                         ),
                     )
-            except Exception:
-                messages.error(
-                    request,
-                    "Não foi possível enviar o email de activação. "
-                    "Tenta novamente mais tarde.",
-                )
+            except Exception as e:
+                    print(f"ERRO AO ENVIAR EMAIL: {e}")
+                    messages.warning(
+                        request,
+                        "Conta criada, mas não foi possível enviar o email de activação. "
+                        "Usa o botão de reenvio na página seguinte.",
+                    )
             return redirect("accounts:activacao_pendente")
 
     return render(request, "accounts/reenviar_activacao.html")
