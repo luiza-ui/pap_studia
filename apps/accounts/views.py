@@ -88,7 +88,7 @@ def registro_view(request):
                             user.email,
                         ),
                     )
-                    if settings.DEBUG:
+                    if True:
                         messages.info(
                             request,
                             format_html(
@@ -184,7 +184,7 @@ def reenviar_activacao_view(request):
                         email,
                     ),
                 )
-                if settings.DEBUG:
+                if True:
                     messages.info(
                         request,
                         format_html(
