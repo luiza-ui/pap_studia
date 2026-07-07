@@ -45,14 +45,17 @@ def _enviar_email_activacao(user, request):
     corpo_html  = render_to_string("accounts/email/activacao.html", contexto)
     corpo_texto = render_to_string("accounts/email/activacao.txt", contexto)
 
-    send_mail(
-        subject="Studia — Activa a tua conta",
-        message=corpo_texto,
-        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@studia.pt"),
-        recipient_list=[user.email],
-        html_message=corpo_html,
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            subject="Studia — Activa a tua conta",
+            message=corpo_texto,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@studia.pt"),
+            recipient_list=[user.email],
+            html_message=corpo_html,
+            fail_silently=False,
+        )
+    except Exception as e:
+        print(f"ERRO AO ENVIAR EMAIL: {e}")
     return url_activacao
 
 
