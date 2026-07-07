@@ -36,15 +36,12 @@ DATABASES = {
     )
 }
 
-# Email via Gmail SMTP
-EMAIL_BACKEND    = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST       = 'smtp.gmail.com'
-EMAIL_PORT       = 587
-EMAIL_USE_TLS    = True
-EMAIL_TIMEOUT = 5  # segundos
-EMAIL_HOST_USER  = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL  = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@studia.pt')
+# Email via Resend (API HTTPS - o Railway bloqueia SMTP nos planos Free/Hobby)
+EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+ANYMAIL = {
+    'RESEND_API_KEY': os.environ.get('RESEND_API_KEY', ''),
+}
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev')
 
 # Moderação por IA (stubs activos enquanto variáveis não estiverem definidas)
 GOOGLE_CLOUD_CREDENTIALS = os.environ.get('GOOGLE_CLOUD_CREDENTIALS', '')
