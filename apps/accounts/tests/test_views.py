@@ -12,7 +12,7 @@ class LoginLogoutTests(TestCase):
         self.password = 'senhaSegura123'
         self.user = User.objects.create_user(
             email=self.email, password=self.password, nome="User Teste",
-            curso='TGPSI', ano_letivo=12, instituicao='Escola X'
+            curso='TGPSI', ano_letivo='12', instituicao='Escola X'
         )
         self.client = Client()
         self.login_url = reverse('accounts:login')
@@ -87,7 +87,7 @@ class RegistoViewTests(TestCase):
     def test_registo_utilizador_ja_logado(self):
         User.objects.create_user(
             email='logado@escola.pt', password='123', nome='Logado',
-            curso='TGPSI', ano_letivo=10, instituicao='Escola'
+            curso='TGPSI', ano_letivo='10', instituicao='Escola'
         )
         self.client.login(email='logado@escola.pt', password='123')
         response = self.client.get(self.registo_url)
@@ -102,8 +102,8 @@ class PerfilViewTests(TestCase):
         self.editar_url = reverse('accounts:editar_perfil')
         self.apagar_url = reverse('accounts:apagar_conta')
         self.user = User.objects.create_user(
-            email='aluno@perfil.com', password='senha123', nome='Aluno',
-            curso='TGPSI', ano_letivo=12, instituicao='Escola'
+            email='aluno@escola.pt', password='PasseForte9!Xy', nome='Aluno',
+            curso='TGPSI', ano_letivo='12', instituicao='Escola'
         )
 
     def test_acesso_perfil_anonimo_rejeitado(self):
@@ -111,15 +111,15 @@ class PerfilViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_acesso_perfil_logado_permitido(self):
-        self.client.login(email='aluno@perfil.com', password='senha123')
+        self.client.login(email='aluno@escola.pt', password='PasseForte9!Xy')
         response = self.client.get(self.perfil_url)
         self.assertEqual(response.status_code, 200)
 
     def test_editar_perfil_sucesso(self):
-        self.client.login(email='aluno@perfil.com', password='senha123')
+        self.client.login(email='aluno@escola.pt', password='PasseForte9!Xy')
         dados = {
             'nome': 'Nome Alterado',
-            'curso': 'TGPSI', 'ano_letivo': 12, 'instituicao': 'Escola'
+            'curso': 'TGPSI', 'ano_letivo': '12', 'instituicao': 'Escola'
         }
         self.client.post(self.editar_url, dados)
         self.user.refresh_from_db()
@@ -127,15 +127,15 @@ class PerfilViewTests(TestCase):
 
     def test_apagar_conta_requer_senha_correta(self):
         """Apagar conta com senha errada deve falhar e manter a conta."""
-        self.client.login(email='aluno@perfil.com', password='senha123')
+        self.client.login(email='aluno@escola.pt', password='PasseForte9!Xy')
         response = self.client.post(self.apagar_url, {'senha': 'senhaErrada'})
         # Fica na mesma página (200) com mensagem de erro
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(User.objects.filter(email='aluno@perfil.com').exists())
+        self.assertTrue(User.objects.filter(email='aluno@escola.pt').exists())
 
     def test_apagar_conta_sucesso_com_senha_correta(self):
         """Apagar conta com senha correta deve eliminar a conta."""
-        self.client.login(email='aluno@perfil.com', password='senha123')
-        response = self.client.post(self.apagar_url, {'senha': 'senha123'})
+        self.client.login(email='aluno@escola.pt', password='PasseForte9!Xy')
+        response = self.client.post(self.apagar_url, {'senha': 'PasseForte9!Xy'})
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(User.objects.filter(email='aluno@perfil.com').exists())
+        self.assertFalse(User.objects.filter(email='aluno@escola.pt').exists())

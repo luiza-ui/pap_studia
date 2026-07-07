@@ -17,8 +17,8 @@ class UserRegistrationFormTests(TestCase):
             'ano_letivo': 10,
             'instituicao': 'Escola Secundária',
             'email': 'novo@escola.pt',
-            'password1': 'senha123',
-            'password2': 'senha123'  # Senhas iguais
+            'password1': 'PasseForte9!Xy',
+            'password2': 'PasseForte9!Xy'  # Senhas iguais
         }
         form = UserRegistrationForm(data=form_data)
         self.assertTrue(form.is_valid())
@@ -31,7 +31,7 @@ class UserRegistrationFormTests(TestCase):
             'ano_letivo': 10,
             'instituicao': 'Escola X',
             'email': 'teste@escola.pt',
-            'password1': 'senha123',
+            'password1': 'PasseForte9!Xy',
             'password2': 'outraSenha'  # Senhas diferentes
         }
         form = UserRegistrationForm(data=form_data)
@@ -57,8 +57,8 @@ class UserRegistrationFormTests(TestCase):
             'ano_letivo': 10,
             'instituicao': 'Escola X',
             'email': 'duplicado@escola.pt', # Email repetido
-            'password1': 'senha123',
-            'password2': 'senha123'
+            'password1': 'PasseForte9!Xy',
+            'password2': 'PasseForte9!Xy'
         }
         form = UserRegistrationForm(data=form_data)
 
@@ -76,7 +76,7 @@ class LoginFormTests(TestCase):
     """
     def setUp(self):
         self.email = 'login@teste.com'
-        self.password = 'senha123'
+        self.password = 'PasseForte9!Xy'
         self.user = User.objects.create_user(
             email=self.email, 
             password=self.password, 
@@ -113,6 +113,15 @@ class EditarPerfilFormTests(TestCase):
     Testes para o formulário de Edição de Perfil.
     """
 
+    def setUp(self):
+        # A view real sempre passa instance=request.user (com email já definido).
+        # Um form sem instance tem um User em branco com email='', o que faz o
+        # User.clean() (validação de domínio institucional) falhar sempre.
+        self.user = User.objects.create_user(
+            email='perfilform@escola.pt', password='PasseForte9!Xy', nome='Nome',
+            curso='TGPSI', ano_letivo='11', instituicao='Escola Y'
+        )
+
     def test_editar_perfil_valido_sem_senha(self):
         """O form deve ser válido se o aluno só mudar os dados e não a senha."""
         form_data = {
@@ -121,7 +130,7 @@ class EditarPerfilFormTests(TestCase):
             'ano_letivo': 11,
             'instituicao': 'Escola Nova'
         }
-        form = EditarPerfilForm(data=form_data)
+        form = EditarPerfilForm(data=form_data, instance=self.user)
         self.assertTrue(form.is_valid())
 
     def test_editar_perfil_com_senha_valida(self):
@@ -131,7 +140,7 @@ class EditarPerfilFormTests(TestCase):
             'password1': 'novaSenha123',
             'password2': 'novaSenha123'
         }
-        form = EditarPerfilForm(data=form_data)
+        form = EditarPerfilForm(data=form_data, instance=self.user)
         self.assertTrue(form.is_valid())
 
     def test_editar_perfil_senhas_diferentes(self):

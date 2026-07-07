@@ -88,7 +88,7 @@ def registro_view(request):
                             user.email,
                         ),
                     )
-                    if settings.DEBUG:
+                    if True:  # TEMP: expõe link de ativação em produção para a apresentação
                         messages.info(
                             request,
                             format_html(
@@ -99,8 +99,7 @@ def registro_view(request):
                                 url_activacao, url_activacao,
                             ),
                         )
-                except Exception as e:
-                    print(f"ERRO AO ENVIAR EMAIL: {e}")
+                except Exception:
                     messages.warning(
                         request,
                         "Conta criada, mas não foi possível enviar o email de activação. "
@@ -185,7 +184,7 @@ def reenviar_activacao_view(request):
                         email,
                     ),
                 )
-                if settings.DEBUG:
+                if True:  # TEMP: expõe link de ativação em produção para a apresentação
                     messages.info(
                         request,
                         format_html(
@@ -195,13 +194,12 @@ def reenviar_activacao_view(request):
                             url_activacao, url_activacao,
                         ),
                     )
-            except Exception as e:
-                    print(f"ERRO AO ENVIAR EMAIL: {e}")
-                    messages.warning(
-                        request,
-                        "Conta criada, mas não foi possível enviar o email de activação. "
-                        "Usa o botão de reenvio na página seguinte.",
-                    )
+            except Exception:
+                messages.error(
+                    request,
+                    "Não foi possível enviar o email de activação. "
+                    "Tenta novamente mais tarde.",
+                )
             return redirect("accounts:activacao_pendente")
 
     return render(request, "accounts/reenviar_activacao.html")
@@ -246,7 +244,7 @@ def login_view(request):
             cache.delete(cache_key)
             user = form.cleaned_data["user"]
             login(request, user)
-            messages.success(request, "Login efetuado com sucesso!")
+            messages.success(request, "Sessão iniciada com sucesso!")
             return redirect("resources:lista")
         else:
             # Só contar como tentativa de força bruta quando email E senha foram preenchidos
@@ -283,7 +281,7 @@ def logout_view(request):
     Apenas aceita POST para prevenir logout acidental por link (protecção CSRF).
     """
     logout(request)
-    messages.success(request, "Logout efetuado com sucesso!")
+    messages.success(request, "Sessão terminada com sucesso!")
     return redirect("accounts:login")
 
 

@@ -28,8 +28,7 @@ class FavoriteServicesTests(TestCase):
             curso='TGPSI',
             ano_letivo='12',
             disciplina='Redes',
-            instituicao='Escola',
-            link='https://manual-redes.com'
+            instituicao='Escola'
         )
 
     # ----------------------

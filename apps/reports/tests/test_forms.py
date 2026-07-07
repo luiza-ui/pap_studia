@@ -20,21 +20,21 @@ class ReportRecursoFormTests(TestCase):
         )
         self.recurso = Resource.objects.create(
             usuario=self.dono, nome='Ficheiro Suspeito', curso='TGPSI',
-            ano_letivo='12', disciplina='Redes', instituicao='Escola',
-            link='https://suspeito.com'
+            ano_letivo='12', disciplina='Redes', instituicao='Escola'
         )
 
     def test_form_valido(self):
         form = ReportRecursoForm(
-            data={'motivo': 'Conteúdo impróprio'},
+            data={'motivo_tipo': 'improprio', 'motivo': 'Conteúdo impróprio'},
             usuario=self.denunciante,
             recurso=self.recurso
         )
         self.assertTrue(form.is_valid())
 
     def test_form_invalido_sem_motivo(self):
+        """Quando o tipo é 'outro', os detalhes (motivo) passam a ser obrigatórios."""
         form = ReportRecursoForm(
-            data={'motivo': ''},
+            data={'motivo_tipo': 'outro', 'motivo': ''},
             usuario=self.denunciante,
             recurso=self.recurso
         )
@@ -83,7 +83,7 @@ class ReportUsuarioFormTests(TestCase):
 
     def test_form_valido(self):
         form = ReportUsuarioForm(
-            data={'motivo': 'Comportamento inadequado'},
+            data={'motivo_tipo': 'ofensa', 'motivo': 'Comportamento inadequado'},
             usuario=self.denunciante,
             denunciado=self.denunciado
         )

@@ -58,8 +58,13 @@ class ResourceModelTests(TestCase):
         with self.assertRaisesMessage(ValidationError, "Tens de fornecer um Ficheiro."):
             recurso.clean()
 
-    def test_erro_ficheiro_duplicado(self):
-        """Ficheiros duplicados (mesmo hash SHA256) devem ser bloqueados."""
+    def test_ficheiro_duplicado_nao_bloqueia_clean(self):
+        """
+        Ficheiros duplicados (mesmo hash SHA256) já não são bloqueados por
+        Resource.clean() — passam a ser sinalizados para moderação/plágio
+        depois de guardados (ver apps.moderation), por isso clean() não
+        deve levantar ValidationError apenas por existir um hash repetido.
+        """
         conteudo = b"conteudo identico para hash duplicado"
         Resource.objects.create(
             usuario=self.user1, nome='Original', curso='TGPSI', ano_letivo='12',
@@ -72,8 +77,7 @@ class ResourceModelTests(TestCase):
             disciplina='Redes', instituicao='Escola',
             arquivo=SimpleUploadedFile("copia.pdf", conteudo, content_type="application/pdf"),
         )
-        with self.assertRaisesMessage(ValidationError, "Este ficheiro já foi enviado anteriormente."):
-            recurso2.clean()
+        recurso2.clean()  # não deve levantar ValidationError
 
     def test_incrementar_contadores(self):
         """Testa se os métodos de incrementar downloads e salvos funcionam."""

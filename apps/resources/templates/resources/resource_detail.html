@@ -101,7 +101,7 @@
           {% elif recurso.tipo_arquivo == 'PPTX' or recurso.tipo_arquivo == 'DOCX' %}
           <div class="alert alert-info mb-4" style="font-size:.875rem;">
             <i class="bi bi-info-circle me-2"></i>
-            A pré-visualização de ficheiros <strong>{{ recurso.tipo_arquivo }}</strong> não é suportada directamente no browser. Faz o download para abrir no teu computador.
+            A pré-visualização de ficheiros <strong>{{ recurso.tipo_arquivo }}</strong> não é suportada directamente no browser. Descarrega o ficheiro para abrir no teu computador.
           </div>
           {% endif %}
         {% endif %}
@@ -110,7 +110,7 @@
         <div class="d-flex gap-2 flex-wrap align-items-center">
           {% if recurso.arquivo %}
           <a href="{% url 'resources:download' recurso.pk %}" class="btn btn-primary">
-            <i class="bi bi-download me-1"></i>Download
+            <i class="bi bi-download me-1"></i>Descarregar
           </a>
           {% endif %}
 
@@ -152,7 +152,7 @@
       </div>
 
       <div class="card-footer d-flex gap-4" style="font-size:.82rem;">
-        <span class="text-muted"><i class="bi bi-download me-1"></i>{{ recurso.total_downloads }} download(s)</span>
+        <span class="text-muted"><i class="bi bi-download me-1"></i>{{ recurso.total_downloads }} descarregamento(s)</span>
         <span class="text-muted"><i class="bi bi-bookmark me-1"></i>{{ recurso.total_salvos }} guardado(s)</span>
       </div>
     </div>
@@ -209,7 +209,7 @@
           <div class="col-4">
             <div class="st-stat">
               <div class="st-stat-value">{{ recurso.total_downloads }}</div>
-              <div class="st-stat-label">Downloads</div>
+              <div class="st-stat-label">Descarregamentos</div>
             </div>
           </div>
           <div class="col-4">
@@ -247,7 +247,7 @@
           {% endif %}
         </div>
         <p class="text-center mb-0" style="font-size:.875rem;">
-          Podes fazer mais <strong style="color:var(--st-blue);">{{ creditos_restantes }}</strong> download(s).
+          Podes fazer mais <strong style="color:var(--st-blue);">{{ creditos_restantes }}</strong> descarregamento(s).
         </p>
       </div>
     </div>

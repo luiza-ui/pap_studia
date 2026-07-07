@@ -31,8 +31,7 @@ class FavoriteModelTests(TestCase):
             curso='TGPSI',
             ano_letivo='12',
             disciplina='Programação',
-            instituicao='Escola',
-            link='https://manual-python.com'
+            instituicao='Escola'
         )
 
     def test_adicionar_favorito_sucesso(self):

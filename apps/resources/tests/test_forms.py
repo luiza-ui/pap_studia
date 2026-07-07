@@ -1,12 +1,19 @@
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import patch
+from django.contrib.auth import get_user_model
 from apps.resources.forms import ResourceForm
+from apps.resources.models import Resource
+
+User = get_user_model()
 
 
 class ResourceFormTests(TestCase):
 
     def setUp(self):
+        self.dono = User.objects.create_user(
+            email='dono.form@escola.pt', password='PasseForte9!Xy', nome='Dono',
+            curso='TGPSI', ano_letivo='12', instituicao='Escola'
+        )
         self.dados_base = {
             'nome': 'Apontamentos de Redes',
             'ano_letivo': '12',
@@ -17,9 +24,7 @@ class ResourceFormTests(TestCase):
             "teste.pdf", b"conteudo do ficheiro", content_type="application/pdf"
         )
 
-    @patch('apps.resources.forms.verificar_arquivo_duplicado')
-    def test_form_valido_com_arquivo(self, mock_verificar):
-        mock_verificar.return_value = None
+    def test_form_valido_com_arquivo(self):
         form = ResourceForm(
             data=self.dados_base,
             files={'arquivo': self.ficheiro_teste}
@@ -32,14 +37,20 @@ class ResourceFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('Tens de fornecer um Ficheiro.', form.non_field_errors())
 
-    @patch('apps.resources.forms.verificar_arquivo_duplicado')
-    def test_erro_arquivo_duplicado(self, mock_verificar):
-        mensagem_erro = "Já existe um recurso com este arquivo."
-        mock_verificar.side_effect = Exception(mensagem_erro)
+    def test_arquivo_duplicado_nao_bloqueia_form(self):
+        """
+        Ficheiros duplicados (mesmo hash) já não são bloqueados ao nível do
+        formulário: são aceites e passam pela verificação de plágio/moderação
+        assíncrona feita na view após o guardar (ver apps.moderation).
+        """
+        Resource.objects.create(
+            usuario=self.dono,
+            nome='Original', curso='TGPSI', ano_letivo='12',
+            disciplina='Redes', instituicao='Escola',
+            hash_arquivo='hash-repetido',
+        )
         form = ResourceForm(data=self.dados_base, files={'arquivo': self.ficheiro_teste})
-        self.assertFalse(form.is_valid())
-        self.assertIn('arquivo', form.errors)
-        self.assertEqual(form.errors['arquivo'][0], mensagem_erro)
+        self.assertTrue(form.is_valid())
 
     def test_erro_ficheiro_demasiado_grande(self):
         ficheiro_grande = SimpleUploadedFile(
@@ -51,9 +62,7 @@ class ResourceFormTests(TestCase):
         self.assertIn('arquivo', form.errors)
         self.assertIn('50 MB', form.errors['arquivo'][0])
 
-    @patch('apps.resources.forms.verificar_arquivo_duplicado')
-    def test_ficheiro_dentro_do_limite_aceite(self, mock_verificar):
-        mock_verificar.return_value = None
+    def test_ficheiro_dentro_do_limite_aceite(self):
         ficheiro_pequeno = SimpleUploadedFile(
             "pequeno.pdf", b"conteudo pequeno", content_type="application/pdf"
         )

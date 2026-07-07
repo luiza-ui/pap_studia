@@ -329,20 +329,20 @@ def download_recurso_view(request, pk):
 
     # Bloquear download de recursos suspensos (excepto pelo dono e staff)
     if recurso.suspenso and not proprio_recurso and not request.user.is_staff:
-        messages.error(request, "Este recurso não está disponível para download.")
+        messages.error(request, "Este recurso não está disponível para descarregamento.")
         return redirect("resources:lista")
 
     # Verificar créditos (só para recursos de outros alunos)
     if not proprio_recurso and not pode_usuario_fazer_download(request.user):
         messages.error(
             request,
-            "Não tens créditos suficientes. Faz upload de um recurso para ganhar mais downloads.",
+            "Não tens créditos suficientes. Envia um recurso para ganhar mais descarregamentos.",
         )
         return redirect("resources:detalhes", pk=pk)
 
     # Verificar se o recurso tem ficheiro
     if not recurso.arquivo:
-        messages.error(request, "Este recurso não possui ficheiro para download.")
+        messages.error(request, "Este recurso não possui ficheiro para descarregamento.")
         return redirect("resources:detalhes", pk=pk)
 
     # Incrementar contadores (apenas para recursos de outros alunos)

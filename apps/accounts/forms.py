@@ -1,5 +1,7 @@
 from django import forms
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from .models import User
 from .validators import validate_email_institucional
@@ -14,6 +16,7 @@ class UserRegistrationForm(forms.ModelForm):
     password1 = forms.CharField(
         label="Senha",
         widget=forms.PasswordInput(attrs={"class": "form-control"}),
+        help_text="Mínimo de 8 caracteres. Evita senhas óbvias ou só com números.",
     )
     password2 = forms.CharField(
         label="Confirmar senha",
@@ -69,6 +72,16 @@ class UserRegistrationForm(forms.ModelForm):
                     "caixa de correio ou pede um novo email de activação na página de login."
                 )
         return email
+
+    def clean_password1(self):
+        """Aplica a política de senha (obrigatória, mas moderada) definida em settings."""
+        password1 = self.cleaned_data.get("password1")
+        if password1:
+            try:
+                validate_password(password1)
+            except DjangoValidationError as e:
+                raise forms.ValidationError(e.messages)
+        return password1
 
     def clean(self):
         """Verifica se as duas senhas coincidem."""
@@ -159,6 +172,7 @@ class EditarPerfilForm(forms.ModelForm):
         label="Nova senha",
         widget=forms.PasswordInput(attrs={"class": "form-control"}),
         required=False,
+        help_text="Deixa em branco para manter a senha actual. Se preencheres: mínimo 8 caracteres, nada de senhas óbvias.",
     )
     password2 = forms.CharField(
         label="Confirmar nova senha",
@@ -213,6 +227,16 @@ class EditarPerfilForm(forms.ModelForm):
             raise forms.ValidationError("Este email já está registado por outro utilizador.")
 
         return email
+
+    def clean_password1(self):
+        """Se uma nova senha for indicada, aplica a política de senha (obrigatória, mas moderada)."""
+        password1 = self.cleaned_data.get("password1")
+        if password1:
+            try:
+                validate_password(password1)
+            except DjangoValidationError as e:
+                raise forms.ValidationError(e.messages)
+        return password1
 
     def clean(self):
         """Verifica se as duas novas senhas coincidem (se preenchidas)."""

@@ -22,7 +22,7 @@ class FavoriteViewsTests(TestCase):
         self.recurso = Resource.objects.create(
             usuario=self.dono, nome='Manual de Redes', curso='TGPSI',
             ano_letivo='12', disciplina='Redes', instituicao='Escola',
-            link='https://manual.com', total_salvos=0
+            total_salvos=0
         )
         self.toggle_url = reverse('favorites:toggle', args=[self.recurso.pk])
         self.remover_url = reverse('favorites:remover', args=[self.recurso.pk])

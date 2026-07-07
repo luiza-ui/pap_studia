@@ -29,8 +29,7 @@ class ReportViewsTests(TestCase):
         )
         self.recurso = Resource.objects.create(
             usuario=self.dono_recurso, nome='Recurso Teste', curso='TGPSI',
-            ano_letivo='12', disciplina='Programação', instituicao='Escola',
-            link='https://recurso-teste.com'
+            ano_letivo='12', disciplina='Programação', instituicao='Escola'
         )
         self.report = Report.objects.create(
             denunciante=self.aluno, recurso=self.recurso,
@@ -86,8 +85,7 @@ class ReportViewsTests(TestCase):
         for i in range(3):
             recurso_extra = Resource.objects.create(
                 usuario=self.admin, nome=f'Recurso Extra {i}', curso='TGPSI',
-                ano_letivo='12', disciplina='Redes', instituicao='Escola',
-                link=f'https://extra-{i}.com'
+                ano_letivo='12', disciplina='Redes', instituicao='Escola'
             )
             report_extra = Report.objects.create(
                 denunciante=self.aluno, recurso=recurso_extra,
@@ -111,6 +109,6 @@ class ReportViewsTests(TestCase):
         )
         self.client.login(email='outro@escola.pt', password='123')
         url = reverse('reports:criar_recurso', args=[self.recurso.pk])
-        response = self.client.post(url, {'motivo': 'Nova denúncia'})
+        response = self.client.post(url, {'motivo_tipo': 'spam', 'motivo': 'Nova denúncia'})
         self.assertEqual(Report.objects.count(), 2)
         self.assertRedirects(response, reverse('resources:detalhes', args=[self.recurso.pk]))

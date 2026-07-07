@@ -19,8 +19,7 @@ class ReportModelTests(TestCase):
         )
         self.recurso = Resource.objects.create(
             usuario=self.infrator, nome='Ficheiro Suspeito', curso='TGPSI',
-            ano_letivo='12', disciplina='Redes', instituicao='Escola',
-            link='https://suspeito.com'
+            ano_letivo='12', disciplina='Redes', instituicao='Escola'
         )
         self.report = Report.objects.create(
             denunciante=self.denunciante, recurso=self.recurso,

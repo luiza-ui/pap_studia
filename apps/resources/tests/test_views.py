@@ -79,10 +79,8 @@ class ResourceViewsTests(TestCase):
         self.assertIn('ja_favoritado', response.context)
         self.assertTrue(response.context['ja_favoritado'])
 
-    @patch('apps.resources.forms.verificar_arquivo_duplicado')
-    def test_upload_recurso_sucesso(self, mock_verificar):
+    def test_upload_recurso_sucesso(self):
         """Um utilizador deve conseguir fazer upload de um recurso com ficheiro."""
-        mock_verificar.return_value = None
         self.client.login(email='dono@escola.pt', password='123')
 
         response = self.client.post(self.upload_url, {
