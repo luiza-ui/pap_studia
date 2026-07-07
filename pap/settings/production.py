@@ -36,20 +36,22 @@ DATABASES = {
     )
 }
 
-# Email via Resend (API HTTPS - o Railway bloqueia SMTP nos planos Free/Hobby)
-EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
-ANYMAIL = {
-    'RESEND_API_KEY': os.environ.get('RESEND_API_KEY', ''),
-}
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'onboarding@resend.dev')
+# Email via Gmail SMTP
+EMAIL_BACKEND    = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST       = 'smtp.gmail.com'
+EMAIL_PORT       = 587
+EMAIL_USE_TLS    = True
+EMAIL_HOST_USER  = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL  = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@studia.pt')
+EMAIL_TIMEOUT = 5  # evita que o worker fique pendurado se o SMTP travar (Railway bloqueia SMTP nos planos gratuitos)
 
 # Moderação por IA (stubs activos enquanto variáveis não estiverem definidas)
 GOOGLE_CLOUD_CREDENTIALS = os.environ.get('GOOGLE_CLOUD_CREDENTIALS', '')
 PERSPECTIVE_API_KEY      = os.environ.get('PERSPECTIVE_API_KEY', '')
 
 # Segurança HTTPS
-SECURE_PROXY_SSL_HEADER     = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT         = False
+SECURE_SSL_REDIRECT         = True
 SESSION_COOKIE_SECURE       = True
 CSRF_COOKIE_SECURE          = True
 SECURE_HSTS_SECONDS            = 31536000

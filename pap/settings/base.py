@@ -20,7 +20,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'anymail',
     'apps.accounts',
     'apps.resources',
     'apps.favorites',
@@ -65,7 +64,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'pap.wsgi.application'
 
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    # Política de senha obrigatória mas equilibrada: exige um mínimo razoável
+    # e bloqueia senhas demasiado óbvias, sem exigir símbolos/maiúsculas
+    # nem comparar com dados pessoais (evita fricção excessiva no registo).
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {'min_length': 8},
