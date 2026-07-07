@@ -8,4 +8,3 @@ dj-database-url
 pillow
 imagehash
 pdfminer.six
-django-anymail[resend]==13.0

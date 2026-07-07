@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Entrar — Studia{% endblock %}
+{% block content %}
+<div class="st-auth-card">
+  <div class="text-center mb-4">
+    <span style="font-size:2rem;font-weight:800;color:var(--st-blue);letter-spacing:-.04em;">Studia.</span>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <h4 class="fw-bold mb-1" style="letter-spacing:-.02em;">Bem-vindo de volta</h4>
+      <p class="text-muted mb-4" style="font-size:.875rem;">Entra com o teu email institucional</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {% if field.field.widget.input_type == 'password' %}
+          <div class="input-group">
+            {{ field }}
+            <button class="btn btn-outline-secondary" type="button"
+                    onclick="toggleSenha('{{ field.id_for_label }}', this)" tabindex="-1">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          {% else %}
+          {{ field }}
+          {% endif %}
+          {% if field.errors %}
+          <div class="invalid-feedback d-block" style="font-size:.8rem;">{% for e in field.errors %}{{ e }}{% endfor %}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger" style="font-size:.875rem;">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>
+        {% endif %}
+        <div class="d-grid mt-4">
+          <button type="submit" class="btn btn-primary btn-lg">Entrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <p class="text-center text-muted mt-3" style="font-size:.875rem;">
+    Ainda não tens conta?
+    <a href="{% url 'accounts:registo' %}" style="color:var(--st-blue);font-weight:600;">Criar conta gratuita</a>
+  </p>
+  <p class="text-center text-muted mt-1" style="font-size:.875rem;">
+    Conta ainda não activada?
+    <a href="{% url 'accounts:reenviar_activacao' %}" style="color:var(--st-blue);font-weight:600;">Reenviar email de activação</a>
+  </p>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function toggleSenha(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.replace('bi-eye', 'bi-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.replace('bi-eye-slash', 'bi-eye');
+  }
+}
+</script>
+{% endblock %}
