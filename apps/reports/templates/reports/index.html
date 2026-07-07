@@ -106,7 +106,7 @@
 document.querySelectorAll('.btn-aceitar').forEach(function(btn) {
   btn.addEventListener('click', function(e) {
     var tipo = btn.getAttribute('data-tipo');
-    var msg = tipo === 'RECURSO'
+    var msg = (tipo === 'RECURSO' || tipo === 'IA')
       ? 'Aceitar esta denúncia?\nO recurso será apagado permanentemente.'
       : 'Aceitar esta denúncia?\nA conta será bloqueada e todo o conteúdo apagado.';
     if (!confirm(msg)) {
