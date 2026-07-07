@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% block title %}{{ recurso.nome }} — Studia{% endblock %}
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb" style="font-size:.82rem;">
+    <li class="breadcrumb-item"><a href="{% url 'resources:lista' %}" class="text-decoration-none" style="color:var(--st-blue);">Recursos</a></li>
+    <li class="breadcrumb-item active text-truncate" style="max-width:260px;">{{ recurso.nome }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+
+  <!-- Coluna principal -->
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-body p-4">
+
+        <!-- Tipo + data -->
+        <div class="d-flex align-items-center gap-2 mb-3">
+          {% if recurso.tipo_arquivo == 'PDF' %}
+          <div class="st-file-icon fi-pdf"><i class="bi bi-file-earmark-pdf"></i></div>
+          <span class="badge badge-tipo-pdf">PDF</span>
+          {% elif recurso.tipo_arquivo == 'DOCX' %}
+          <div class="st-file-icon fi-docx"><i class="bi bi-file-earmark-word"></i></div>
+          <span class="badge badge-tipo-docx">DOCX</span>
+          {% elif recurso.tipo_arquivo == 'PPTX' %}
+          <div class="st-file-icon fi-pptx"><i class="bi bi-file-earmark-slides"></i></div>
+          <span class="badge badge-tipo-pptx">PPTX</span>
+          {% elif recurso.tipo_arquivo == 'IMG' %}
+          <div class="st-file-icon fi-img"><i class="bi bi-image"></i></div>
+          <span class="badge badge-tipo-img">Imagem</span>
+          {% else %}
+          <div class="st-file-icon fi-default"><i class="bi bi-file-earmark"></i></div>
+          <span class="badge badge-tipo-outro">{{ recurso.tipo_arquivo }}</span>
+          {% endif %}
+          <small class="text-muted ms-auto">{{ recurso.data_upload|date:"d/m/Y" }}</small>
+        </div>
+
+        <h4 class="fw-bold mb-3" style="letter-spacing:-.02em;">{{ recurso.nome }}</h4>
+
+        <!-- Metadados -->
+        <div class="row g-2 mb-4" style="font-size:.875rem;">
+          <div class="col-6 col-md-3">
+            <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Disciplina</div>
+            <div class="fw-semibold">{{ recurso.disciplina }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Curso</div>
+            <div class="fw-semibold">{{ recurso.get_curso_display }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Ano</div>
+            <div class="fw-semibold">{{ recurso.ano_letivo }}º Ano</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Instituição</div>
+            <div class="fw-semibold">{{ recurso.instituicao }}</div>
+          </div>
+          {% if recurso.professor %}
+          <div class="col-6 col-md-3">
+            <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Professor</div>
+            <div class="fw-semibold">{{ recurso.professor }}</div>
+          </div>
+          {% endif %}
+          <div class="col-6 col-md-3">
+            <div class="text-muted" style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Enviado por</div>
+            <div class="fw-semibold">
+              {% if recurso.usuario != user %}
+              <a href="{% url 'accounts:perfil_publico' recurso.usuario.pk %}" class="text-decoration-none" style="color:var(--st-blue);">{{ recurso.usuario.nome }}</a>
+              <a href="{% url 'reports:criar_usuario' recurso.usuario.pk %}" class="ms-2 text-muted" title="Reportar utilizador" style="font-size:.85rem;"><i class="bi bi-flag"></i></a>
+              {% else %}
+              <a href="{% url 'accounts:perfil' %}" class="text-decoration-none" style="color:var(--st-blue);">{{ recurso.usuario.nome }}</a>
+              <span class="badge badge-tipo-outro ms-1" style="font-size:.65rem;">tu</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Pré-visualização -->
+        {% if recurso.arquivo %}
+          {% if recurso.tipo_arquivo == 'PDF' %}
+          <div class="mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <i class="bi bi-eye text-muted"></i>
+              <span class="fw-semibold" style="font-size:.875rem;">Pré-visualização</span>
+            </div>
+            <div class="st-preview-frame">
+              <iframe src="{{ recurso.arquivo.url }}"></iframe>
+            </div>
+          </div>
+          {% elif recurso.tipo_arquivo == 'IMG' %}
+          <div class="mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <i class="bi bi-eye text-muted"></i>
+              <span class="fw-semibold" style="font-size:.875rem;">Pré-visualização</span>
+            </div>
+            <img src="{{ recurso.arquivo.url }}" class="img-fluid rounded" style="max-height:400px;border:1px solid var(--st-border);" alt="{{ recurso.nome }}">
+          </div>
+          {% elif recurso.tipo_arquivo == 'PPTX' or recurso.tipo_arquivo == 'DOCX' %}
+          <div class="alert alert-info mb-4" style="font-size:.875rem;">
+            <i class="bi bi-info-circle me-2"></i>
+            A pré-visualização de ficheiros <strong>{{ recurso.tipo_arquivo }}</strong> não é suportada directamente no browser. Descarrega o ficheiro para abrir no teu computador.
+          </div>
+          {% endif %}
+        {% endif %}
+
+        <!-- Acções -->
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+          {% if recurso.arquivo %}
+          <a href="{% url 'resources:download' recurso.pk %}" class="btn btn-primary">
+            <i class="bi bi-download me-1"></i>Descarregar
+          </a>
+          {% endif %}
+
+          {% if recurso.usuario != user %}
+          <form method="post" action="{% url 'favorites:toggle' recurso.pk %}">{% csrf_token %}
+            <button type="submit" class="btn {% if ja_favoritado %}btn-warning{% else %}btn-outline-warning{% endif %}">
+              <i class="bi bi-bookmark{% if ja_favoritado %}-fill{% endif %} me-1"></i>
+              {% if ja_favoritado %}Guardado{% else %}Guardar{% endif %}
+            </button>
+          </form>
+          <a href="{% url 'reports:criar_recurso' recurso.pk %}" class="btn btn-outline-danger">
+            <i class="bi bi-flag me-1"></i>Reportar
+          </a>
+          {% endif %}
+
+          {% if recurso.usuario == user or user.is_staff %}
+          <div class="ms-auto d-flex gap-2">
+            {% if recurso.usuario == user and not tem_report_pendente %}
+            <a href="{% url 'resources:editar' recurso.pk %}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-pencil me-1"></i>Editar
+            </a>
+            {% elif recurso.usuario == user and tem_report_pendente %}
+            <span class="btn btn-outline-secondary btn-sm disabled" title="Tem denúncias pendentes">
+              <i class="bi bi-pencil me-1"></i>Editar
+            </span>
+            {% endif %}
+            <a href="{% url 'resources:apagar' recurso.pk %}" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-trash me-1"></i>Apagar
+            </a>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if tem_report_pendente and recurso.usuario == user %}
+        <div class="alert alert-warning mt-3 mb-0" style="font-size:.875rem;">
+          <i class="bi bi-exclamation-triangle me-2"></i>Este recurso tem denúncias pendentes e não pode ser editado.
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="card-footer d-flex gap-4" style="font-size:.82rem;">
+        <span class="text-muted"><i class="bi bi-download me-1"></i>{{ recurso.total_downloads }} descarregamento(s)</span>
+        <span class="text-muted"><i class="bi bi-bookmark me-1"></i>{{ recurso.total_salvos }} guardado(s)</span>
+      </div>
+    </div>
+
+    <!-- Comentários -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-chat-dots me-2" style="color:var(--st-blue);"></i>Comentários ({{ comentarios|length }})
+      </div>
+      <div class="card-body p-4">
+        <form method="post" action="{% url 'comments:adicionar_comentario' recurso.pk %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <textarea name="texto" class="form-control" rows="3" placeholder="Escreve um comentário…"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-send me-1"></i>Comentar
+          </button>
+        </form>
+
+        {% if comentarios %}
+        <div class="st-divider">comentários anteriores</div>
+        {% for c in comentarios %}
+        <div class="d-flex gap-3 mb-4">
+          <div class="st-avatar-comment flex-shrink-0">{{ c.usuario.nome|first|upper }}</div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between mb-1">
+              <strong style="font-size:.875rem;">{{ c.usuario.nome }}</strong>
+              <small class="text-muted">{{ c.criado_em|date:"d/m/Y H:i" }}</small>
+            </div>
+            <p class="mb-1" style="font-size:.875rem;">{{ c.texto }}</p>
+            {% if c.usuario == user or user.is_staff %}
+            <form method="post" action="{% url 'comments:apagar_comentario' c.pk %}" class="d-inline">{% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-danger p-0" style="font-size:.8rem;">
+                <i class="bi bi-trash"></i> Apagar
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Coluna lateral -->
+  <div class="col-lg-4">
+    <!-- Estatísticas -->
+    <div class="card mb-3">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-3" style="font-size:.875rem;text-transform:uppercase;letter-spacing:.05em;color:var(--st-text-muted);">Estatísticas</h6>
+        <div class="row g-2">
+          <div class="col-4">
+            <div class="st-stat">
+              <div class="st-stat-value">{{ recurso.total_downloads }}</div>
+              <div class="st-stat-label">Descarregamentos</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="st-stat">
+              <div class="st-stat-value">{{ recurso.total_salvos }}</div>
+              <div class="st-stat-label">Guardados</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="st-stat">
+              <div class="st-stat-value">{{ comentarios|length }}</div>
+              <div class="st-stat-label">Comentários</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Créditos -->
+    {% if not user.is_staff %}
+    <div class="card mb-3">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-3" style="font-size:.875rem;text-transform:uppercase;letter-spacing:.05em;color:var(--st-text-muted);">Os teus créditos</h6>
+        <div class="d-flex justify-content-between mb-1" style="font-size:.875rem;">
+          <span class="text-muted">Limite total</span>
+          <strong>{{ limite_downloads }}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2" style="font-size:.875rem;">
+          <span class="text-muted">Já descarregaste</span>
+          <span>{{ user.total_downloads }}</span>
+        </div>
+        <div class="progress mb-3" style="height:6px;">
+          {% if limite_downloads > 0 %}
+          <div class="progress-bar" style="width:{% widthratio user.total_downloads limite_downloads 100 %}%;"></div>
+          {% endif %}
+        </div>
+        <p class="text-center mb-0" style="font-size:.875rem;">
+          Podes fazer mais <strong style="color:var(--st-blue);">{{ creditos_restantes }}</strong> descarregamento(s).
+        </p>
+      </div>
+    </div>
+    {% endif %}
+
+    <a href="{% url 'resources:lista' %}" class="btn btn-outline-secondary w-100">
+      <i class="bi bi-arrow-left me-1"></i>Voltar à lista
+    </a>
+  </div>
+</div>
+{% endblock %}
